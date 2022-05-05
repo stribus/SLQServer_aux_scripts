@@ -1,0 +1,1 @@
+isnull((select 'yes' where 2 > 1),'no')
