@@ -1,7 +1,6 @@
-
-
 select
-	CONCAT( y.statusId,' - ' ,s.status) status
+	--CONCAT( y.statusId,' - ' ,s.status) status
+	cast( y.statusId as varchar)+' - ' +(s.status) status
 	, case 
 		when y.statusId in (10) then null
 		else SUBSTRING(  scriptSQL,
@@ -15,14 +14,23 @@ select
         )
      end   rodando    
     ,scriptSQL
+    , DB_NAME(s.DBID ) base
     , s.HOSTNAME
     , s.PROGRAM_NAME 
     , s.LOGINAME 
     , s.CPU 
     , s.MEMUSAGE --Número de páginas no cache de procedimento que estão atualmente alocadas para este processo. Um número negativo indica que o processo está liberando a memória alocada por outro processo.   
     , s.physical_io 
-    , s.waittime
-	, DB_NAME(s.DBID ) base
+    , s.waittime [waittime (ms)] --Tempo de espera atual em milissegundos
+    , s.LASTWAITTYPE 
+    , case 
+    		when s.WAITTYPE =0x006E then 'aguardando memoria'
+    		else CONVERT(varchar(64), s.WAITTYPE, 1)
+    end ESPERA    
+    , s.WAITRESOURCE 
+    , m.REQUESTED_MEMORY_KB [MEMORIA REQUISITADA KB] --Quantidade total solicitada de memória em quilobytes.
+    , m.GRANTED_MEMORY_KB 	[TOTAL DE MEMÓRIA REALMENTE CONCEDIDO]		--Total de memória realmente concedido em quilobytes. Poderá ser NULL se a memória ainda não tiver sido concedida.
+    , M.REQUIRED_MEMORY_KB [MEMÓRIA MÍNIMA EXIGIDA]
 	,s.cmd
 	,s.spid
 	,y.descricao
@@ -39,11 +47,16 @@ from
 ,('8','suspended','A sessão está aguardando a conclusão de um evento, como E/S.')	
 ,('10','sleeping','There is no work to be done.')	
 	) y(statusId,status,descricao) on  s.status = y.status
+	left join sys.dm_exec_query_memory_grants m  on  m.SESSION_ID = s.SPID 
 where   
-	spid > 50
-	and spid <> @@spid --remove a propria consulta
+	spid <> @@spid --remove a propria consulta
+	and spid > 50	
 	and stmt_end <> 0
 order by y.statusId
 
 
 --SELECT @@spid
+
+
+
+SELECT * FROM SYS.DM_EXEC_SESSIONS WHERE  STATUS = 'running' and DATABASE_ID = DB_ID('sadasdasdas') 

@@ -1,0 +1,91 @@
+SELECT (SELECT  CAMPO FOR XML PATH('')) xMML,TEXTO
+FROM (
+	VALUES
+	(123456,'DASSDASD'),
+	(5413432,'NBVCGFGGFV'),
+	(987655,'PPIUIUYJJGH')	
+) V(CAMPO,TEXTO)
+
+
+SELECT 
+	cast(K.XMML as xml).value('.','varchar(MAX)') DASDSDAS
+FROM (
+SELECT (SELECT campo FOR XML PATH) xMML,TEXTO
+FROM (
+	VALUES
+	(123456,'DASSDASD'),
+	(5413432,'NBVCGFGGFV'),
+	(987655,'PPIUIUYJJGH')	
+) V(CAMPO,TEXTO)
+) K
+
+
+
+
+SELECT 
+	cast(K.XMML as xml).value('.[1]','varchar(MAX)') DASDSDAS
+	,xMML
+	,CAST(K.XMML as xml).query('/row/CAMPOS2')DDSAD
+FROM (
+SELECT (SELECT T.CAMPOS2 FROM (VALUES (15),(23),(30))T(CAMPOS2) FOR XML PATH) xMML,TEXTO
+FROM (
+	VALUES
+	(123456,'DASSDASD'),
+	(5413432,'NBVCGFGGFV'),
+	(987655,'PPIUIUYJJGH')	
+) V(CAMPO,TEXTO)
+) K
+
+
+
+SELECT 
+	K.CAMPO
+	, cast(K.XMML as xml).value('.[1]','varchar(MAX)') DASDSDAS
+	,xMML
+	,CAST(K.XMML as xml).query('/CAMPOS2')DDSAD
+	, T2.campo.query('.')
+	, T2.campo.value('.[1]','varchar(MAX)') trdds
+FROM (
+	SELECT 
+		cast((SELECT T.CAMPOS2+v.campo CAMPOS2 FROM (VALUES (15),(23),(30))T(CAMPOS2) FOR XML PATH('')) as xml) xMML
+		,TEXTO
+		,CAMPO
+	FROM (
+		VALUES
+		(12,'DASSDASD'),
+		(54,'NBVCGFGGFV'),
+		(20,'NBVCGFGGFV'),
+		(15,'NBVCGFGGFV'),
+		(98,'PPIUIUYJJGH')	
+	) V(CAMPO,TEXTO)
+) K
+CROSS APPLY k.xMML.nodes('/CAMPOS2') AS T2(campo)
+where
+	35 in (SELECT T3.CAMPO.value('.[1]','INT') FROM k.xMML.nodes('/CAMPOS2') AS T3(campo))
+	
+	
+	
+	
+	
+SELECT
+	( SELECT K.CAMPO
+		FROM
+		(
+		SELECT V.CAMPO
+		UNION 
+		SELECT T.CAMPO
+		FROM (
+				VALUES
+				(123456,'DASSDASD'),
+				(22,'NBVCGFGGFV'),
+				(987655,'PPIUIUYJJGH')	
+			) T(CAMPO,TEXTO)
+		) K(CAMPO)	
+		FOR XML PATH('')
+	) XXXX
+FROM (
+	VALUES
+	(123456,'DASSDASD'),
+	(5413432,'NBVCGFGGFV'),
+	(987655,'PPIUIUYJJGH')	
+) V(CAMPO,TEXTO)
