@@ -1,7 +1,7 @@
 --title:running query
 select	
 	S.SPID
-	,CAST( Y.STATUSID AS VARCHAR)+' - ' +(S.STATUS) STATUS	
+	, CAST( Y.STATUSID AS VARCHAR)+' - ' +(S.STATUS) STATUS	
 	, CONVERT(VARCHAR, DATEADD(SECOND, DATEDIFF(SECOND, R.START_TIME, GETDATE()), 0), 108) AS [TEMPO TOTAL (HH:MM:SS)] -- TEMPO TOTAL QUE A QUERY ESTÁ RODANDO EM FORMATO HH:MM:SS
 	, CASE 
 		WHEN Y.STATUSID IN (10) THEN NULL
@@ -15,7 +15,8 @@ select
                 END
         )
      END   RODANDO    
-    ,SCRIPTSQL
+    , SCRIPTSQL
+	, OBJECT_NAME(st.objectid, st.dbid) AS NomeObjeto
     , DB_NAME(S.DBID ) BASE
     , S.HOSTNAME
     , S.PROGRAM_NAME 
@@ -38,11 +39,11 @@ select
     , M.REQUESTED_MEMORY_KB/1024 [MEMORIA REQUISITADA MB] --Quantidade total solicitada de memória em quilobytes.
     , M.GRANTED_MEMORY_KB/1024 	[TOTAL DE MEMÓRIA REALMENTE CONCEDIDO MB]		--Total de memória realmente concedido em quilobytes. Poderá ser NULL se a memória ainda não tiver sido concedida.
     , M.REQUIRED_MEMORY_KB/1024 [MEMÓRIA MÍNIMA EXIGIDA MB]
-	,S.CMD
-	,Y.DESCRICAO
-	,BLOCK_SESSION.BLOCKED_SESSIONS_ID
-	,BLOCK_SESSION.BLOCKING_SESSION_ID
-	,RES_ID.[DATABASE_ID]
+	, S.CMD
+	, Y.DESCRICAO
+	, BLOCK_SESSION.BLOCKED_SESSIONS_ID
+	, BLOCK_SESSION.BLOCKING_SESSION_ID
+	, RES_ID.[DATABASE_ID]
 from  
 	SYS.SYSPROCESSES S WITH(NOLOCK)
 	OUTER APPLY (select text  scriptSQL from ::fn_get_sql(s.sql_handle)) X
@@ -58,6 +59,7 @@ from
 	) y(statusId,status,descricao) on  s.status = y.status
 	LEFT JOIN SYS.DM_EXEC_QUERY_MEMORY_GRANTS M WITH(NOLOCK) ON  M.SESSION_ID = S.SPID
 	LEFT JOIN SYS.DM_EXEC_REQUESTS R WITH(NOLOCK) ON R.SESSION_ID = S.SPID
+	OUTER APPLY sys.dm_exec_sql_text(r.sql_handle) st
 	OUTER APPLY (
 		select
 			LEFT(a, pos - 2) AS tipo			
